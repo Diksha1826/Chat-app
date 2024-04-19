@@ -1,7 +1,14 @@
-import React from 'react'
+import React from 'react';
+import styled from 'styled-components';
 
 export const Messages = () => {
   return (
-    <div>Messages</div>
+    <Container>
+      message
+    </Container>
   )
 }
+
+const Container = styled.div`
+  height: 80% ;
+`;
