@@ -1,18 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Logout } from './Logout';
 import { ChatInput } from './ChatInput';
-import { Messages } from './Messages';
 import axios from 'axios';
+import {v4 as uuidv4} from 'uuid';
 import { getAllMessagesRoute, sendMessageRoute } from '../utils/APIRoutes';
 
 
-export const ChatContainer = ({currentChat , currentUser}) => {
+export const ChatContainer = ({currentChat , currentUser , socket }) => {
     const [messages , setMessages] = useState([]);
+    const [arrivalMessage , setArrivalMessage] = useState(null);
+    const scrollRef = useRef();
 
     useEffect(()=>{
         if(currentUser && currentChat !== undefined){
             async function getcurrentmsg (){
+
             
              const response = await axios.post(getAllMessagesRoute , {
                 from: currentUser._id ,
@@ -31,8 +34,32 @@ export const ChatContainer = ({currentChat , currentUser}) => {
             from: currentUser._id,
             to: currentChat._id,
             message: msg,
-        })
+        });
+        socket.current.emit("send-msg" , {
+            from: currentUser._id,
+            to: currentChat._id,
+            message: msg,   
+        });
+        const msgs = [...messages];
+        msgs.push({fromSelf: true , message: msg});
+        setMessages(msgs);
     };
+
+    useEffect(()=>{
+       if(socket.current){
+        socket.current.on("msg-recieve" , (msg)=>{
+            setArrivalMessage({fromSelf: false , message: msg});
+        });
+       }
+    }, []);
+
+    useEffect(()=>{
+        arrivalMessage && setMessages((prev)=> [...prev , arrivalMessage]);
+    }, [arrivalMessage]);
+
+    useEffect(()=>{
+        scrollRef.current?.scrollIntoView({behaviour: "smooth"});
+    })
 
   return (
     <>
@@ -51,9 +78,9 @@ export const ChatContainer = ({currentChat , currentUser}) => {
         </div>
         <div className="chat-messages">
             {
-                messages.map((message , index)=>{
+                messages.map((message)=>{
                     return(
-                        <div key={index}>
+                        <div ref={scrollRef} key={uuidv4()}>
                             <div className={`message ${message.fromSelf ? "sended": "recieved"}`}>
                                 <div className="content">
                                     <p>
@@ -109,6 +136,15 @@ overflow: hidden;
     flex-direction: column;
     gap: 1rem;
     overflow: auto;
+    &::-webkit-scrollbar{
+        width: 0.2rem;
+        &-thumb{
+            background-color: #ffffff39;
+            width: 0.1rem;
+            border-radius: 1rem;
+        }
+
+    }
     .message{
         display: flex;
         align-items: center;
