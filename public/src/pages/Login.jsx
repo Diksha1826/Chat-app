@@ -71,7 +71,7 @@ export const Login = () => {
         <form onSubmit={(e)=> handleSubmit(e)} >
              <div className="brand">
                 <img src={logo} alt="logo" />
-                <h1>snappy</h1>
+                <h1>VChat</h1>
              </div>
              <input type="text" 
              placeholder='Username' 
